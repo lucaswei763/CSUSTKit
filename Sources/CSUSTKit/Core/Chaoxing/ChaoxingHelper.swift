@@ -5,6 +5,9 @@ import SwiftSoup
 /// 学习通助手
 public class ChaoxingHelper: BaseHelper {
 
+    // MARK: - Headers
+    internal static let defaultHeaders: HTTPHeaders = ["Accept-Language": "zh-CN,zh-Hans;q=0.9"]
+
     // MARK: - Methods
 
     public override func isLoggedIn() async -> Bool {
@@ -125,7 +128,13 @@ public class ChaoxingHelper: BaseHelper {
     }
 
     internal func performRequest(_ url: String, _ method: HTTPMethod = .get, _ parameters: [String: String]? = nil) async throws -> String {
-        let response = try await session.request(url, method: method, parameters: parameters, encoding: URLEncoding.default).string()
+        let response = try await session.request(
+            url,
+            method: method,
+            parameters: parameters,
+            encoding: URLEncoding.default,
+            headers: Self.defaultHeaders
+        ).string()
         if isLoginRequired(response: response) {
             throw ChaoxingHelperError.notLoggedIn
         }
