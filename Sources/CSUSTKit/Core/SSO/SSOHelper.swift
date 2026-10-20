@@ -38,6 +38,9 @@ public class SSOHelper: BaseHelper {
             throw SSOHelperError.getLoginFormFailed("无响应数据")
         }
         let document = try SwiftSoup.parse(value)
+
+        try checkImproveUserInfoIsNeeded(response, document)
+
         guard let pwdEncryptSaltInput = try document.select("input#pwdEncryptSalt").first() else {
             throw SSOHelperError.getLoginFormFailed("未找到pwdEncryptSalt输入框")
         }
@@ -45,6 +48,44 @@ public class SSOHelper: BaseHelper {
             throw SSOHelperError.getLoginFormFailed("未找到execution输入框")
         }
         return LoginForm(pwdEncryptSalt: try pwdEncryptSaltInput.attr("value"), execution: try executionInput.attr("value"))
+    }
+
+    /// 检查是否需要完善信息
+    /// - Throws: `SSOHelperError`
+    /// - Returns: 是否需要完善信息
+    public func checkImproveUserInfoIsNeeded(_ response: DataResponse<String, AFError>, _ document: Document) throws {
+        let pageTitle = (try? document.title()) ?? ""
+        let currentURL = response.response?.url?.absoluteString ?? ""
+        let isImprovePage = pageTitle.contains("完善资料") || currentURL.contains("improveUserInfo")
+
+        guard isImprovePage else { return }
+
+        let checkItems: [(id: String, name: String)] = [
+            ("pwdDiv", "完善登录密码"),
+            ("telDiv", "绑定手机号"),
+            ("emailDiv", "绑定邮箱"),
+            ("birthdayDiv", "完善出生日期"),
+            ("questionDiv", "设置安全密保问题")
+        ]
+        
+        var pendingTasks: [String] = []
+        
+        for item in checkItems {
+            if let element = try? document.select("#\(item.id)").first() {
+                let style = (try? element.attr("style")) ?? ""
+                let normalizedStyle = style.replacingOccurrences(of: " ", with: "").lowercased()
+                
+                if !normalizedStyle.contains("display:none") {
+                    pendingTasks.append(item.name)
+                }
+            }
+        }
+        
+        if pendingTasks.isEmpty {
+            pendingTasks.append("账号安全资料（如密码或密保信息）")
+        }
+        
+        throw SSOHelperError.needImproveUserInfo(pendingTasks)
     }
 
     /// 检查是否需要验证码
