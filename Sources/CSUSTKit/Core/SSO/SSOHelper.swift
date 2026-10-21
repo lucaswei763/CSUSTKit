@@ -49,15 +49,13 @@ public class SSOHelper: BaseHelper {
         }
         return LoginForm(pwdEncryptSalt: try pwdEncryptSaltInput.attr("value"), execution: try executionInput.attr("value"))
     }
-    
+
     private func checkNeedImproveUserInfo(_ response: DataResponse<String, AFError>) throws {
         guard let html = response.value else { return }
 
-        let document = try SwiftSoup.parse(html)
-        let pageTitle = (try? document.title()) ?? ""
         let currentURL = response.response?.url?.absoluteString ?? ""
-        
-        if pageTitle.contains("完善资料") || currentURL.contains("improveUserInfo") {
+
+        if html.contains("<title>完善资料</title>") || currentURL.contains("improveUserInfo") {
             throw SSOHelperError.needImproveUserInfo
         }
     }
