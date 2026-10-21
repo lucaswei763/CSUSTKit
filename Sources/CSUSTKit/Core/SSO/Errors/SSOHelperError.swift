@@ -8,7 +8,7 @@ extension SSOHelper {
         /// 登录失败
         case loginFailed(String)
         /// 账号资料待完善
-        case needImproveUserInfo([String])
+        case needImproveUserInfo
         /// 验证码获取失败
         case captchaRetrievalFailed
         /// 动态码获取失败
@@ -29,11 +29,8 @@ extension SSOHelper {
                 return "获取登录表单失败: \(message)"
             case .loginFailed(let message):
                 return "登录失败: \(message)"
-            case .needImproveUserInfo(let items):
-                if items.isEmpty {
-                    return "账号资料待完善，请先在统一身份认证页面补全信息"
-                }
-                return "账号资料待完善（\(items.joined(separator: "、"))），请先在统一身份认证页面补全信息"
+            case .needImproveUserInfo:
+                return "账号信息待完善，请前往网页端完善信息"
             case .captchaRetrievalFailed:
                 return "验证码获取失败"
             case .dynamicCodeRetrievalFailed(let message):
